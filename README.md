@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nature Remo Browser Control
 
-## Getting Started
+Nature Remo デバイスを使って家電を制御するモダンな Web アプリケーションです。スマートフォンや PC のブラウザから、エアコン、照明、スマートロックなどを直感的に操作できます。
 
-First, run the development server:
+## ✨ 特徴
+
+### 🏠 部屋別管理
+
+- **自動グループ化**: Nature Remo デバイスの部屋設定に基づいて家電を自動分類
+- **わかりやすい UI**: 各部屋の家電をカード形式で見やすく表示
+- **リアルタイム状態表示**: 現在の家電の状態（温度、電源、明るさなど）をリアルタイム表示
+
+### 💡 照明制御
+
+- **基本操作**: 点灯・消灯の基本制御
+- **明るさ調整**: 段階的な明るさ変更
+- **色温度調整**: 暖色・寒色の切り替え
+- **お気に入り設定**: よく使う明るさをワンタッチで設定
+
+### ❄️ エアコン制御
+
+- **温度調整**: 精密な温度設定（0.5℃ 刻み）
+- **運転モード**: 冷房・暖房・除湿・送風・自動の切り替え
+- **風量調整**: 静音から強風まで段階的調整
+- **風向制御**: 上下・左右の風向き調整
+
+### 🔐 スマートロック
+
+- **施錠・解錠**: セサミなどの BLE 対応スマートロック制御
+- **状態確認**: 現在の施錠状態を視覚的に表示
+
+### 🎨 モダンなデザイン
+
+- **Chakra UI 風**: 美しく直感的なインターフェース
+- **レスポンシブ**: スマートフォン・タブレット・PC 全対応
+- **ダークモード対応**: 目に優しい表示切り替え
+- **アニメーション**: スムーズな操作感
+
+### 🔒 セキュリティ
+
+- **サーバーサイド API**: Nature Remo API キーは安全にサーバーサイドで管理
+- **プロキシ構造**: 直接的な API 呼び出しを回避
+- **エラーハンドリング**: 詳細なエラー情報とフォールバック機能
+
+## 🚀 技術スタック
+
+- **フレームワーク**: Next.js 15 (App Router)
+- **言語**: TypeScript
+- **スタイリング**: Tailwind CSS v3
+- **UI コンポーネント**: カスタム Chakra UI 風コンポーネント
+- **API**: Nature Remo Cloud API
+- **開発ツール**: ESLint, PostCSS
+
+## 📋 必要な環境
+
+- Node.js 18.0.0 以上
+- npm または yarn
+- Nature Remo デバイス
+- Nature Remo アカウント
+
+## 🔧 セットアップ手順
+
+### 1. リポジトリのクローン
+
+```bash
+git clone https://github.com/your-username/natureremo-browser-control.git
+cd natureremo-browser-control
+```
+
+### 2. 依存関係のインストール
+
+```bash
+npm install
+# または
+yarn install
+```
+
+### 3. 環境変数の設定
+
+#### Nature Remo API アクセストークンの取得
+
+1. [Nature Remo Cloud API](https://developer.nature.global/) にアクセス
+2. Nature Remo アカウントでログイン
+3. 「Generate access token」でアクセストークンを生成
+4. トークンを安全な場所にコピー（一度しか表示されません）
+
+#### .env.local ファイルの作成
+
+プロジェクトルートに `.env.local` ファイルを作成し、以下の内容を記載：
+
+```bash
+# Nature Remo API Access Token
+NATURE_REMO_ACCESS_TOKEN=your_access_token_here
+```
+
+**⚠️ 重要**:
+
+- `your_access_token_here` を実際のアクセストークンに置き換えてください
+- このファイルは `.gitignore` に含まれているため、Git にコミットされません
+- アクセストークンは絶対に公開しないでください
+
+### 4. 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
+# または
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザで [http://localhost:3000](http://localhost:3000) を開いてアプリケーションにアクセスできます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 5. 動作確認
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **家電の表示**: 登録されている Nature Remo デバイスと家電が表示されることを確認
+2. **照明制御**: 照明の点灯・消灯、明るさ調整をテスト
+3. **エアコン制御**: 温度設定、運転モード変更をテスト
+4. **状態更新**: 操作後に状態表示が正しく更新されることを確認
 
-## Learn More
+## 📱 使用方法
 
-To learn more about Next.js, take a look at the following resources:
+### 照明の操作
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **点灯・消灯**: 緑色/灰色のボタンで基本制御
+- **明るさ調整**: ☀️（明るく）、🌙（暗く）ボタンで調整
+- **色温度**: ❄️（寒色）、🔥（暖色）ボタンで調整
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### エアコンの操作
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **温度設定**: +/- ボタンで 0.5℃ 刻みの調整
+- **運転モード**: 冷房・暖房・除湿・送風・自動から選択
+- **風量**: 1〜5 段階 + 自動設定
+- **電源**: ON/OFF の切り替え
