@@ -45,14 +45,27 @@ export class NatureRemoAPI {
   async updateAirCon(applianceId: string, settings: Partial<AirConSettings>): Promise<void> {
     const params = new URLSearchParams();
     Object.entries(settings).forEach(([key, value]) => {
-      if (value !== undefined) {
+      if (value !== undefined && value !== '') {
         // Nature Remo APIはtemperatureというキーを要求する
         if (key === 'temp') {
           params.append('temperature', value.toString());
+        } else if (key === 'button') {
+          // buttonは空文字列の場合は送信しない
+          if (value.toString().trim() !== '') {
+            params.append(key, value.toString());
+          }
         } else {
           params.append(key, value.toString());
         }
       }
+    });
+
+    // APIリクエストの詳細をログ出力
+    console.log(`エアコン設定APIリクエスト:`, {
+      applianceId,
+      originalSettings: settings,
+      params: Object.fromEntries(params.entries()),
+      endpoint: `/1/appliances/${applianceId}/aircon_settings`
     });
 
     await this.request(`/1/appliances/${applianceId}/aircon_settings`, {
