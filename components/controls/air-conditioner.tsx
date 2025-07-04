@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Appliance, AirConSettings } from '@/types/nature-remo';
+import { useState, useEffect } from 'react';
+import { Appliance, AirConSettings, Device } from '@/types/nature-remo';
 import { Button } from '@/components/ui/button';
 import { useIsClient } from '@/hooks/use-is-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,9 +14,47 @@ interface AirConditionerProps {
 export function AirConditioner({ appliance, onUpdate }: AirConditionerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentSettings, setCurrentSettings] = useState(appliance.settings);
+  const [localAppliance, setLocalAppliance] = useState(appliance);
+  const [deviceInfo, setDeviceInfo] = useState<Device | null>(null);
   const isClient = useIsClient();
   
   const settings = currentSettings;
+  const device = localAppliance.device;
+  const roomTemperature = deviceInfo?.newest_events?.te?.val || device.newest_events?.te?.val;
+  const humidity = deviceInfo?.newest_events?.hu?.val || device.newest_events?.hu?.val;
+  const illuminance = deviceInfo?.newest_events?.il?.val || device.newest_events?.il?.val;
+  
+  // コンポーネントマウント時にデバイス情報を取得
+  useEffect(() => {
+    const fetchDeviceInfo = async () => {
+      try {
+        const response = await fetch('/api/remo/devices');
+        if (response.ok) {
+          const devices = await response.json();
+          const currentDevice = devices.find((d: Device) => d.id === device.id);
+          if (currentDevice) {
+            console.log('Device info fetched:', currentDevice);
+            setDeviceInfo(currentDevice);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch device info:', error);
+      }
+    };
+    
+    fetchDeviceInfo();
+  }, [device.id]);
+  
+  // デバッグ用にデバイス情報をログ出力
+  console.log('Device info:', {
+    name: device.name,
+    newest_events: device.newest_events,
+    roomTemperature,
+    humidity,
+    illuminance,
+    deviceInfo
+  });
+  
   if (!settings) return null;
 
   const updateSetting = async (newSettings: Partial<AirConSettings>) => {
@@ -24,13 +62,7 @@ export function AirConditioner({ appliance, onUpdate }: AirConditionerProps) {
     try {
       console.log(`エアコン操作: ${appliance.nickname}`, newSettings);
       
-      // UIを即座に更新
-      if (newSettings.temp) {
-        setCurrentSettings(prev => prev ? { ...prev, temp: newSettings.temp! } : prev);
-      }
-      if (newSettings.mode) {
-        setCurrentSettings(prev => prev ? { ...prev, mode: newSettings.mode! } : prev);
-      }
+      // オプティミスティックUI更新を削除
 
       const response = await fetch(`/api/remo/appliances/${appliance.id}/aircon_settings`, {
         method: 'POST',
@@ -45,24 +77,45 @@ export function AirConditioner({ appliance, onUpdate }: AirConditionerProps) {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('エアコン操作APIエラー:', errorText);
-        // エラー時は元の値に戻す
-        setCurrentSettings(appliance.settings);
+        // エラー時はAPIから取得した最新の状態に戻す
+        setCurrentSettings(localAppliance.settings);
         throw new Error(`操作に失敗しました: ${response.status} - ${errorText}`);
       }
       
       const result = await response.json();
       console.log('エアコン操作成功:', result);
       
+      // 成功後に最新の状態を再取得してUIを更新
+      setTimeout(async () => {
+        try {
+          const applianceResponse = await fetch(`/api/remo/appliances`);
+          if (applianceResponse.ok) {
+            const appliances: Appliance[] = await applianceResponse.json();
+            const updatedAppliance = appliances.find((a: Appliance) => a.id === appliance.id);
+            if (updatedAppliance) {
+              console.log('最新の家電情報を取得:', updatedAppliance.settings);
+              setLocalAppliance(updatedAppliance);
+              setCurrentSettings(updatedAppliance.settings);
+            }
+          }
+        } catch (error) {
+          console.warn('最新状態の取得に失敗:', error);
+        } finally {
+          setIsLoading(false); // 状態取得後にローディングを解除
+        }
+      }, 1500); // 少し長めに待つ
+      
       // 成功後に親コンポーネントを更新
       onUpdate?.();
     } catch (error) {
       console.error('エアコン操作エラー:', error);
-      alert(`❄️ エアコンの操作に失敗しました。\n詳細: ${error instanceof Error ? error.message : '不明なエラー'}`);
-      // エラー時は元の値に戻す
-      setCurrentSettings(appliance.settings);
-    } finally {
+      alert(`❄️ エアコンの操作に失敗しました。
+詳細: ${error instanceof Error ? error.message : '不明なエラー'}`);
+      // エラー時はAPIから取得した最新の状態に戻す
+      setCurrentSettings(localAppliance.settings);
       setIsLoading(false);
     }
+    // finallyブロックを削除し、setTimeoutの中でローディングを解除
   };
 
   const adjustTemperature = (delta: number) => {
@@ -111,10 +164,23 @@ export function AirConditioner({ appliance, onUpdate }: AirConditionerProps) {
           <div className="grid grid-cols-2 gap-6 text-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-orange-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">温</div>
+                <div className="w-6 h-6 bg-orange-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">設</div>
                 <span className="text-gray-700 font-semibold">設定温度</span>
               </div>
               <span className="font-bold text-2xl text-orange-600">{settings.temp}°C</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-red-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">室</div>
+                <span className="text-gray-700 font-semibold">
+                  {roomTemperature ? '室温' : humidity ? '湿度' : 'センサー'}
+                </span>
+              </div>
+              <span className="font-bold text-2xl text-red-600">
+                {roomTemperature ? `${roomTemperature.toFixed(1)}°C` : 
+                 humidity ? `${humidity.toFixed(0)}%` : 
+                 illuminance ? `${illuminance.toFixed(0)}lx` : 'N/A'}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

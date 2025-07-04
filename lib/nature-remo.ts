@@ -1,4 +1,4 @@
-import { Appliance, AirConSettings } from '@/types/nature-remo';
+import { Appliance, AirConSettings, Device } from '@/types/nature-remo';
 
 const BASE_URL = 'https://api.nature.global';
 
@@ -38,11 +38,20 @@ export class NatureRemoAPI {
     return this.request<Appliance[]>('/1/appliances');
   }
 
+  async getDevices(): Promise<Device[]> {
+    return this.request<Device[]>('/1/devices');
+  }
+
   async updateAirCon(applianceId: string, settings: Partial<AirConSettings>): Promise<void> {
     const params = new URLSearchParams();
     Object.entries(settings).forEach(([key, value]) => {
       if (value !== undefined) {
-        params.append(key, value.toString());
+        // Nature Remo APIはtemperatureというキーを要求する
+        if (key === 'temp') {
+          params.append('temperature', value.toString());
+        } else {
+          params.append(key, value.toString());
+        }
       }
     });
 

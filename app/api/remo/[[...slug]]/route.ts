@@ -30,6 +30,13 @@ export async function GET(
       console.log('Successfully fetched appliances:', appliances.length);
       return NextResponse.json(appliances);
     }
+    
+    if (slug[0] === 'devices') {
+      console.log('Fetching devices from Nature Remo API...');
+      const devices = await api.getDevices();
+      console.log('Successfully fetched devices:', devices.length);
+      return NextResponse.json(devices);
+    }
 
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   } catch (error) {
